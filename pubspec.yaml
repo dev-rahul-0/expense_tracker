@@ -38,6 +38,7 @@ dependencies:
   uuid: ^4.2.1
   intl: ^0.18.1
   peanut: ^5.0.0
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:

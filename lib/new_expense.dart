@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:expense/expense.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NewExpense extends StatefulWidget {
   const NewExpense({super.key, required this.onAddExpense});
@@ -14,6 +17,29 @@ class _NewExpenseState extends State<NewExpense> {
   DateTime? _selectDate;
   Category _selectCatogeory = Category.leisure;
 
+  void initState(){
+    super.initState();
+    _loadExpenseData();
+  }
+
+  void _loadExpenseData()async{
+    final pref = await SharedPreferences.getInstance();
+    final expenseDataString = pref.getString('expenseData');
+    if(expenseDataString!=null)
+      {
+        final expenseData = json.decode(expenseDataString);
+        setState(() {
+          _titleController.text = expenseData['Title'];
+          _amountController.text = expenseData['Amount'].toString();
+          _selectDate = DateTime.parse(expenseData['Date']);
+          _selectCatogeory = Category.values.firstWhere((element) => element.toString() == expenseData['Category']);
+        });
+      }
+
+
+  }
+
+
   void _presentDatePicker() async {
     final now = DateTime.now();
     final firstDate = DateTime(now.year - 2, now.month, now.day);
@@ -24,7 +50,7 @@ class _NewExpenseState extends State<NewExpense> {
     });
   }
 
-  void _submitExpenseData() {
+  void _submitExpenseData() async{
     final enteredAmount = double.tryParse(_amountController.text);
     final amountIsInvalid = enteredAmount == null || enteredAmount <= 0;
     if (_titleController.text.trim().isEmpty ||
@@ -43,6 +69,23 @@ class _NewExpenseState extends State<NewExpense> {
       );
       return;
     }
+
+
+
+    //for sharedpreference use
+    final pref = await SharedPreferences.getInstance();
+    final expenseData = {
+      'Title' : _titleController.text,
+      'Amount' : enteredAmount,
+      'Date' : _selectDate!.toIso8601String(),
+      'Category' : _selectCatogeory.toString(),
+    };
+    await pref.setString('expenseData', json.encode(expenseData));
+
+
+
+
+
     widget.onAddExpense(Expense
       (title: _titleController.text,
         amount: enteredAmount,
@@ -79,7 +122,7 @@ class _NewExpenseState extends State<NewExpense> {
                   controller: _amountController,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                    prefixText: '\$',
+                    prefixText: '\u{20B9}',
                     label: Text('Amount'),
                   ),
                 ),
@@ -137,3 +180,4 @@ class _NewExpenseState extends State<NewExpense> {
     );
   }
 }
+
